@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hiring FMS 2.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        #entranceAnimationOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        #entranceAnimationOverlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(79, 70, 229, 0.3);
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .loading-text {
+            margin-top: 1.5rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            animation: fadeInOut 2s infinite ease-in-out;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes modalPopup {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal-content.modal-popup-active {
+            animation: modalPopup 0.4s ease-out forwards;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+        .modal-content-wrapper {
+            /* Wrapper can be used for additional styling if needed, but centering is on .modal */
+        }
+        .modal-content {
+            background-color: #ffffff;
+            padding: 1rem;
+            border: 1px solid #d1d5db;
+            width: 90%; /* Fallback for very small screens */
+            max-width: 95vw; /* Ensure it doesn't exceed viewport width on very small screens */
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            position: relative;
+            transform: scale(1);
+            opacity: 1;
+            max-height: calc(90vh - 1rem);
+            overflow-y: auto;
+        }
+
+        @media (min-width: 500px) {
+            .modal-content {
+                width: 75vw;
+            }
+        }
+
+        #addEntrySectionModal .modal-content,
+        #howToUseModal .modal-content,
+        #doerInfoModal .modal-content,
+        #stageActionModal .modal-content,
+        #googleFormActionModal .modal-content { /* Added googleFormActionModal */
+            max-width: 850px;
+        }
+        #entryDetailsModal .modal-content {
+            max-width: 1000px;
+        }
+        #messageAlertModal .modal-content,
+        #stageActionModal .modal-content {
+            width: auto;
+            max-width: 550px;
+        }
+        #googleFormActionModal .modal-content { /* Specific styling for Google Form modal */
+             padding: 5px; /* Minimal padding for iframe */
+        }
+
+
+        @media (min-width: 640px) {
+            .modal-content {
+                padding: 1.5rem;
+                max-height: calc(90vh - 3rem);
+            }
+            #messageAlertModal .modal-content,
+            #stageActionModal .modal-content {
+                padding: 1.5rem;
+            }
+        }
+        @media (min-width: 768px) {
+             .modal-content {
+                padding: 25px;
+            }
+        }
+
+
+        #addEntrySectionModal .modal-content {
+             padding: 5px;
+        }
+        #googleFormIframe, #googleFormActionIframe { /* Applied to both iframes */
+            width: 100%;
+            height: calc(85vh - 70px); /* Adjust height as needed */
+            border: none;
+        }
+
+        .close-button {
+            color: #6b7280; position: absolute; top: 0.5rem; right: 0.75rem;
+            font-size: 1.875rem; font-weight: bold; transition: color 0.2s;
+            line-height: 1;
+            z-index: 10;
+            padding: 0.25rem;
+        }
+         @media (min-width: 640px) {
+            .close-button {
+                top: 10px; right: 15px;
+            }
+        }
+        /* Specific close button for modals with minimal padding like iframe modals */
+        #addEntrySectionModal .close-button,
+        #googleFormActionModal .close-button {
+            top: 8px; right: 10px;
+            font-size: 1.5rem; /* Slightly smaller for tighter spaces */
+            background-color: rgba(255,255,255,0.7);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
+        .modal-controls-group {
+            position: absolute;
+            top: 0.5rem; right: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            z-index: 10;
+        }
+        @media (min-width: 640px) {
+            .modal-controls-group {
+                top: 12px; right: 15px;
+                gap: 6px;
+            }
+        }
+
+        .modal-control-button {
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            cursor: pointer;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.25rem;
+            transition: background-color 0.2s;
+        }
+        .modal-control-button svg {
+            width: 1rem;
+            height: 1rem;
+            display: block;
+        }
+        .modal-control-button.delete-btn svg { fill: #9ca3af; }
+        .modal-control-button.delete-btn:hover svg { fill: #dc2626; }
+        .modal-control-button.close-btn svg { fill: #9ca3af; }
+        .modal-control-button.close-btn:hover svg { fill: #374151; }
+         .modal-control-button.close-lost-btn svg { fill: #9ca3af; }
+        .modal-control-button.close-lost-btn:hover svg { fill: #f97316; }
+        .modal-control-button:hover { background-color: #e5e7eb; }
+        .modal-control-button.sync-btn svg { fill: #9ca3af; }
+        .modal-control-button.sync-btn:hover svg { fill: #4f46e5; }
+
+
+        .table-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-container::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        .table-container::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        .table-container::-webkit-scrollbar-thumb:hover { background: #555; }
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.375rem; font-weight: 500;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, transform 0.1s ease;
+            cursor: pointer; text-align: center; display: inline-flex;
+            align-items: center; justify-content: center;
+            min-height: 44px;
+        }
+        @media (min-width: 640px) {
+            .btn {
+                padding: 0.75rem 1.5rem;
+            }
+        }
+        .btn svg { margin-right: 0.5rem; margin-left: -0.25rem; }
+        .btn-icon-only svg { margin-right: 0; margin-left: 0; }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary { background-color: #4f46e5; color: white; }
+        .btn-primary:hover { background-color: #4338ca; box-shadow: 0 4px 14px 0 rgba(79,70,229,0.39); }
+        .btn-secondary { background-color: #e5e7eb; color: #374151; }
+        .btn-secondary:hover { background-color: #d1d5db; }
+        .btn-success { background-color: #10b981; color: white; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-warning { background-color: #f59e0b; color: white; }
+        .btn-warning:hover { background-color: #d97706; }
+        .btn-info { background-color: #3b82f6; color: white; }
+        .btn-info:hover { background-color: #2563eb; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-danger:hover { background-color: #b91c1c; }
+
+        .form-grid { display: grid; grid-template-columns: repeat(1, 1fr); gap: 1rem; }
+        @media (min-width: 768px) {
+            .form-grid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+            .form-grid .col-span-2 { grid-column: span 2 / span 2; }
+        }
+
+        .delay-ontime { color: #10b981; font-weight: 500; }
+        .delay-late { color: #dc2626; font-weight: 500; }
+        .delay-early { color: #3b82f6; font-weight: 500; }
+        .overdue-task { color: #dc2626; font-weight: bold; }
+
+        #entryDetailsModal .crm-card { background: #fff; }
+        #entryDetailsModal .crm-card h2 { margin-bottom: 1rem; font-size: 1.125rem; sm:font-size: 1.25rem; color: #2c3e50; font-weight: 600; }
+        #entryDetailsModal .crm-section-row { display: flex; flex-direction: column; sm:flex-row; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+        #entryDetailsModal .crm-section { flex: 1 1 100%; sm:flex: 1 1 300px; border-radius: 8px; border: 1px solid #e0e0e0; background-color: var(--section-bg, rgba(200,200,200,0.1)); font-size: 0.8rem; sm:font-size: 13px; min-width: 280px; }
+        #entryDetailsModal .crm-section-header { padding: 0.5rem 0.75rem; sm:padding: 8px 12px; font-weight: 700; font-size: 0.875rem; sm:font-size: 14px; display: flex; align-items: center; gap: 0.5rem; sm:gap: 8px; color: white; background-color: var(--section-color, #777); border-top-left-radius: 7px; border-top-right-radius: 7px;}
+        #entryDetailsModal .crm-section-header svg { width: 0.875rem; height: 0.875rem; sm:width: 16px; sm:height: 16px; fill: white;}
+        #entryDetailsModal .crm-section-content { padding: 0.625rem 0.75rem; sm:padding: 10px 12px; border-bottom-left-radius: 7px; border-bottom-right-radius: 7px;}
+        #entryDetailsModal .crm-description-item { margin-bottom: 0.5rem; }
+        #entryDetailsModal .crm-description-item:last-child { margin-bottom: 0; }
+        #entryDetailsModal .crm-label { font-weight: 600; color: #555; font-size: 0.75rem; sm:font-size: 0.8rem; margin-bottom: 2px;}
+        #entryDetailsModal .crm-value { font-size: 0.8rem; sm:font-size: 0.9rem; color: #222; word-break: break-word;}
+        #entryDetailsModal .crm-status-banner { background-color: #fff3cd; color: #856404; padding: 0.625rem 0.75rem; sm:padding: 10px 12px; border-radius: 8px; font-weight: 700; text-align: center; margin-top: 1.25rem; font-size: 0.875rem; sm:font-size: 14px;}
+
+        .details-section { background-color: #f9fafb; padding: 0.75rem; border-radius: 0.375rem; margin-bottom: 1.25rem; border: 1px solid #e5e7eb;}
+        .details-section h3 { font-size: 1rem; sm:font-size: 1.125rem; font-weight: 600; color: #4f46e5; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #6366f1; }
+        .timeline-step { padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 0.375rem; margin-bottom: 0.75rem; background-color: #fff;}
+        .timeline-step strong { color: #4338ca; font-size: 0.9rem; sm:font-size: 1rem; display: block; margin-bottom: 0.25rem;}
+        .timeline-details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); sm:grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;}
+        .timeline-details-grid .details-item { padding: 0.1rem 0; margin-bottom: 0.1rem;}
+        .timeline-details-grid .details-label { font-size: 0.75rem; sm:font-size: 0.8rem; }
+        .timeline-details-grid .details-value { font-size: 0.8rem; sm:font-size: 0.85rem; }
+        .timeline-step .btn-take-action { margin-top: 0.75rem; padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+        .timeline-step .action-button-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+
+        .scorecard-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); sm:grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.5rem; sm:gap: 1rem; margin-bottom: 1.5rem; sm:margin-bottom: 2rem;}
+        .scorecard { background-color: white; padding: 1rem; sm:padding: 1.25rem; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); text-align: center;}
+        .scorecard-title { font-size: 0.75rem; sm:font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; sm:margin-bottom: 0.5rem; font-weight: 500; }
+        .scorecard-value { font-size: 1.875rem; sm:font-size: 2.25rem; font-weight: 700; color: #1f2937; }
+        /* Scorecard specific colors for Hiring FMS 2.0 */
+        .scorecard.total-requirements .scorecard-value { color: #4f46e5; } /* Indigo for total */
+        .scorecard.pending-jd .scorecard-value { color: #f59e0b; } /* Amber for JD */
+        .scorecard.pending-cv-filtering .scorecard-value { color: #84cc16; } /* Lime for CV Filtering */
+        .scorecard.pending-first-interview .scorecard-value { color: #3b82f6; } /* Blue for 1st Interview */
+        .scorecard.pending-final-interview .scorecard-value { color: #a855f7; } /* Purple for Final Interview */
+        .scorecard.selected .scorecard-value { color: #10b981; } /* Green for Selected */
+        .scorecard.other-final .scorecard-value { color: #ef4444; } /* Red for other final (e.g. Rejected) */
+
+
+        /* Status Badge Styles for Hiring FMS 2.0 */
+        .status-badge {
+            padding: 0.25em 0.6em;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            sm:font-size: 0.75rem;
+            font-weight: 500;
+            text-align: center;
+            display: inline-block;
+            min-width: 100px;
+            sm:min-width: 120px;
+            color: white;
+        }
+        .status-pending-jd { background-color: #fbbf24; color: #78350f; } /* Amber */
+        .status-pending-cv-filtering { background-color: #a3e635; color: #3f6212; } /* Lime */
+        .status-pending-first-interview { background-color: #60a5fa; color: #1e3a8a; } /* Blue */
+        .status-pending-final-interview { background-color: #c084fc; color: #581c87; } /* Purple */
+        .status-selected { background-color: #34d399; color: #065f46; } /* Green */
+        .status-other-final { background-color: #f87171; color: #7f1d1d; } /* Red for Rejected/Other */
+        .status-default { background-color: #9ca3af; color: white; } /* Gray for default/unknown */
+
+
+        /* Class for rotating sync icon */
+        .rotate-animate {
+            animation: rotateIcon 1s linear;
+        }
+        @keyframes rotateIcon {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .main-content-area {
+            flex-grow: 1;
+            padding: 0.75rem;
+        }
+         @media (min-width: 640px) {
+            .main-content-area {
+                padding: 1.5rem;
+            }
+        }
+        @media (min-width: 768px) {
+            .main-content-area {
+                padding: 2rem;
+            }
+        }
+
+
+        @media screen and (max-width: 768px) {
+            .responsive-table thead { display: none; }
+            .responsive-table tr { display: block; margin-bottom: 0.625em; border-radius: 0.375rem; box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06); border: 1px solid #e5e7eb;}
+            .responsive-table td {
+                display: block; text-align: right; font-size: 0.75rem;
+                border-bottom: 1px solid #e5e7eb; padding: 0.4rem 0.6rem !important;
+                padding-left: 42% !important;
+                position: relative;
+            }
+            .responsive-table td::before {
+                content: attr(data-label); position: absolute; left: 0.4rem;
+                width: 38%;
+                padding-right: 0.4rem;
+                white-space: nowrap; text-align: left; font-weight: 600; color: #4b5563;
+            }
+            .responsive-table td:last-child { border-bottom: 0; }
+            .responsive-table.doer-info-table td { padding-left: 30% !important; }
+            .responsive-table.doer-info-table td::before { width: 25%; }
+            .main-action-buttons button { width: 100%; margin-bottom: 0.5rem;}
+        }
+        .filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem; /* space-x-2 and space-y-2 equivalent */
+            align-items: center;
+        }
+        .filter-item {
+            flex-grow: 1; /* Allow items to grow */
+            min-width: 150px; /* Minimum width for filter items */
+        }
+         @media (min-width: 1024px) { /* lg breakpoint */
+            .filter-container {
+                flex-wrap: nowrap; /* Prevent wrapping on larger screens */
+            }
+            #searchInputContainer {
+                flex-shrink: 0; /* Prevent search input from shrinking too much */
+                width: auto;
+            }
+            #filterControlsContainer {
+                 flex-grow: 1;
+                 display: flex;
+                 flex-wrap: wrap; /* Allow filters to wrap within their container */
+                 gap: 0.5rem;
+                 justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div id="entranceAnimationOverlay">
+        <div class="spinner"></div>
+        <p class="loading-text">Loading Hiring FMS 2.0...</p>
+    </div>
+
+    <header class="sticky top-0 z-50 bg-white shadow-md">
+        <div class="container mx-auto px-2 sm:px-4 lg:px-8"> <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                        </svg>
+                    </div>
+                    <div class="ml-2 sm:ml-3">
+                        <p class="text-md sm:text-lg font-bold text-gray-800">Hiring FMS 2.0</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <div class="hidden sm:block">
+                        <p id="dateTimeDisplay" class="text-xs text-gray-500"></p>
+                    </div>
+
+                    <button id="syncButton" type="button" title="Sync Data" class="p-1.5 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        <span class="sr-only">Sync Data</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                        </svg>
+                    </button>
+
+                    <button type="button" title="User Profile" class="p-1.5 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                        <span class="sr-only">Open user menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content-area container mx-auto max-w-7xl bg-white rounded-lg shadow-xl mt-4">
+        <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:flex-wrap justify-end gap-2 main-action-buttons">
+            <button id="openDoerInfoModalButton" class="btn btn-secondary text-sm w-full sm:w-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+                </svg>
+                Responsibilities
+            </button>
+            <button id="openBackendDataButton" class="btn btn-secondary text-sm w-full sm:w-auto">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-database-fill-gear" viewBox="0 0 16 16">
+                    <path d="M8 1c-1.573 0-3.022.289-4.096.777C2.875 2.245 2 2.993 2 4s.875 1.755 1.904 2.223C4.978 6.711 6.427 7 8 7s3.022-.289 4.096-.777C13.125 5.755 14 5.007 14 4s-.875-1.755-1.904-2.223C11.022 1.289 9.573 1 8 1"/>
+                    <path d="M2 7v-.839c.457.432 1.004.751 1.49.972C4.722 7.693 6.318 8 8 8s3.278-.307 4.51-.867c.486-.22 1.033-.54 1.49-.972V7c0 .021-.001.043-.003.064C13.486 7.153 12.006 7.5 8 7.5s-5.486-.347-6.997-.436A1.02 1.02 0 0 1 2 7m-1 7v-1c0-.021.001-.043.003-.064C1.514 12.847 2.994 12.5 6 12.5s4.486.347 5.997.436c.002.02.003.043.003.064v1a1.02 1.02 0 0 1-.003.064C11.486 13.153 10.006 13.5 7 13.5s-4.486-.347-5.997-.436A1.02 1.02 0 0 1 1 14m10.887-1.754C10.51 12.089 9.36 12 8 12s-2.51.089-3.887.246a.5.5 0 0 0-.113.034V10.5a.5.5 0 0 1 .113-.034C5.49 10.32 6.64 10.25 8 10.25s2.51.07 3.887.216a.5.5 0 0 1 .113.034v1.716a.5.5 0 0 0-.113-.034M15.777 11.1l-.82-.072A1.8 1.8 0 0 0 14.19 11H14v-.11c0-.081-.001-.16-.004-.238c-.103-.64-.393-1.22-.788-1.73A2.99 2.99 0 0 0 11.437 8c-.152.243-.29.505-.412.786A2.99 2.99 0 0 0 12.563 8c.152.243.29.505.412.786a2.99 2.99 0 0 0 1.025.974c.003.078.004.157.004.238V11h-.191c-.391-.03-.755-.166-1.058-.28A1.8 1.8 0 0 0 11.4 11.1l-.82.072a.5.5 0 1 0 .036.993l.82-.072c.14-.012.274-.003.393.047a.5.5 0 0 0 .253.286l.708.404a.5.5 0 0 0 .596-.044l.708-.404a.5.5 0 0 0 .253-.286c.118-.05.253-.059.393-.047l.82.072a.5.5 0 1 0 .036-.993zM8 16a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>
+                </svg>
+                Backend Data
+            </button>
+            <button id="openHowToUseModalButton" class="btn btn-secondary text-sm w-full sm:w-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-question-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.496 6.033h.825c.138 0 .248-.113.266-.25.09-.656.54-1.134 1.342-1.134.686 0 1.314.343 1.314 1.168 0 .635-.374.927-.965 1.371-.673.489-1.206 1.06-1.168 1.987l.003.217a.25.25 0 0 0 .25.246h.811a.25.25 0 0 0 .25-.25v-.105c0-.718.273-.927 1.01-1.486.609-.463 1.244-.977 1.244-2.056 0-1.511-1.276-2.241-2.673-2.241-1.267 0-2.655.59-2.75 2.286a.237.237 0 0 0 .241.247zm2.325 6.443c-.584 0-1.009-.394-1.009-.927 0-.552.425-.94 1.01-.94.609 0 1.028.388 1.028.94 0 .533-.42.927-1.029.927z"/>
+                </svg>
+                How to Use
+            </button>
+            <button id="openEntryFormModalButton" class="btn btn-primary text-sm w-full sm:w-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z"/></svg>
+                Add Requirement
+            </button>
+        </div>
+
+        <section id="scorecardSection" class="mb-6 sm:mb-8">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-3 sm:mb-4">Hiring Overview</h2>
+            <div class="scorecard-container">
+                <div class="scorecard total-requirements"> <div class="scorecard-title">Total Requirements</div>
+                    <div class="scorecard-value" id="scorecardTotalRequirements">0</div>
+                </div>
+                <div class="scorecard pending-jd"> <div class="scorecard-title">Pending JD & Posting</div>
+                    <div class="scorecard-value" id="scorecardPendingJD">0</div>
+                </div>
+                <div class="scorecard pending-cv-filtering"> <div class="scorecard-title">Pending CV Filtering</div>
+                    <div class="scorecard-value" id="scorecardPendingCVFiltering">0</div>
+                </div>
+                <div class="scorecard pending-first-interview"> <div class="scorecard-title">Pending 1st Interview</div>
+                    <div class="scorecard-value" id="scorecardPendingFirstInterview">0</div>
+                </div>
+                 <div class="scorecard pending-final-interview"> <div class="scorecard-title">Pending Final Interview</div>
+                    <div class="scorecard-value" id="scorecardPendingFinalInterview">0</div>
+                </div>
+                <div class="scorecard selected"> <div class="scorecard-title">Selected</div>
+                    <div class="scorecard-value" id="scorecardSelected">0</div>
+                </div>
+                 <div class="scorecard other-final"> <div class="scorecard-title">Other Final Status</div> <div class="scorecard-value" id="scorecardOtherFinal">0</div>
+                </div>
+            </div>
+        </section>
+
+
+        <div id="addEntrySectionModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-gray-50">
+                <span id="closeEntryFormModalButton" class="close-button">&times;</span>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 text-center">Add New Hiring Requirement</h2>
+                <p class="text-xs sm:text-sm text-gray-500 text-center mb-3 sm:mb-4">Please submit new requirements using the Google Form.</p>
+                <iframe id="googleFormIframe"
+                        src="https://docs.google.com/forms/d/e/1FAIpQLSdN0zJExxbNFvQdV3-a6QpAp7sCtX5n_cJsYG8U-MaRXz5L1A/viewform?embedded=true"
+                        frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+            </section>
+        </div></div>
+
+        <div id="doerInfoModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-white">
+                <span id="closeDoerInfoModalButton" class="close-button">&times;</span>
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-600 mb-4 sm:mb-6">Hiring FMS 2.0: Process Responsibilities</h1>
+                <div class="space-y-4 sm:space-y-6 text-gray-700 text-xs sm:text-sm leading-relaxed">
+                    <div class="bg-gray-50 p-3 sm:p-4 rounded-md shadow">
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mb-2 flex items-center">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-blue-500 mr-2 sm:mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            Add Requirement Entry
+                        </h2>
+                        <ul class="list-disc list-inside ml-6 sm:ml-10 space-y-1">
+                            <li><strong>Who:</strong> HR Team / Hiring Manager</li>
+                            <li><strong>How:</strong> Click on "Add Requirement" button (opens Google Form - ensure URL is correct)</li>
+                            <li><strong>When:</strong> As new hiring requirements are approved</li>
+                        </ul>
+                    </div>
+                    <div class="bg-gray-50 p-3 sm:p-4 rounded-md shadow">
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mb-2 flex items-center">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-purple-500 mr-2 sm:mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                            </svg>
+                            Stage 1: Job Description & Posting
+                        </h2>
+                        <ul class="list-disc list-inside ml-6 sm:ml-10 space-y-1">
+                            <li><strong>Who:</strong> HR / Hiring Manager</li>
+                            <li><strong>How:</strong> Prepare JD, post on relevant platforms. Update FMS via "Take Action" (may link to internal tool or be manual update).</li>
+                            <li><strong>When:</strong> As per defined TAT from requirement approval.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-gray-50 p-3 sm:p-4 rounded-md shadow">
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mb-2 flex items-center">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-orange-400 mr-2 sm:mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                               <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                            </svg>
+                            Stage 2: Filtering CVs
+                        </h2>
+                        <ul class="list-disc list-inside ml-6 sm:ml-10 space-y-1">
+                            <li><strong>Who:</strong> Recruiter / HR</li>
+                            <li><strong>How:</strong> Screen applications against JD. Shortlist candidates. Update FMS.</li>
+                            <li><strong>When:</strong> After application window closes or on a rolling basis.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-gray-50 p-3 sm:p-4 rounded-md shadow">
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mb-2 flex items-center">
+                           <svg class="h-5 w-5 sm:h-6 sm:w-6 text-yellow-500 mr-2 sm:mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 00-2.25-2.25H3.375A2.25 2.25 0 001.125 9.75v1.5a2.25 2.25 0 002.25 2.25h.094m15.106-5.594a2.25 2.25 0 00-2.25-2.25h-.094m15.106 5.594v.448A2.25 2.25 0 0118.75 13.5h-.094m15.106-5.594A2.25 2.25 0 0018.75 9h-.094m0 3.75h.094a2.25 2.25 0 012.25 2.25v.448m0-5.594a2.25 2.25 0 01-2.25 2.25h-.094" />
+                            </svg>
+                            Stage 3: 1st Round of Interview
+                        </h2>
+                        <ul class="list-disc list-inside ml-6 sm:ml-10 space-y-1">
+                            <li><strong>Who:</strong> Interview Panel (HR / Tech)</li>
+                            <li><strong>How:</strong> Conduct initial interview. Update feedback and status in FMS.</li>
+                            <li><strong>When:</strong> After CVs are shortlisted.</li>
+                        </ul>
+                    </div>
+                     <div class="bg-gray-50 p-3 sm:p-4 rounded-md shadow">
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mb-2 flex items-center">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-teal-500 mr-2 sm:mr-3 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.745 3.745 0 013.296-1.043A3.745 3.745 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                            </svg>
+                            Stage 4: Final Round of Interview
+                        </h2>
+                        <ul class="list-disc list-inside ml-6 sm:ml-10 space-y-1">
+                            <li><strong>Who:</strong> Senior Panel / HOD</li>
+                            <li><strong>How:</strong> Conduct final interview. Make hiring decision. Update FMS with decision and comments.</li>
+                            <li><strong>When:</strong> After 1st round feedback.</li>
+                        </ul>
+                    </div>
+                </div>
+                 <div class="mt-6 sm:mt-8 text-right">
+                    <button type="button" id="okDoerInfoModalButton" class="btn btn-primary">OK</button>
+                </div>
+            </section>
+        </div></div>
+
+        <div id="entryDetailsModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-white">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-1 mt-6 sm:mt-8" id="detailsModalTitle">Requirement Details</h2>
+                <p class="text-xs sm:text-sm text-gray-500 mb-4 sm:mb-6" id="detailsModalSubtitle"></p>
+                <div id="detailsModalContent">
+                    </div>
+            </section>
+        </div></div>
+
+        <div id="howToUseModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-white">
+                <span id="closeHowToUseModalButton" class="close-button">&times;</span>
+                <h1 class="text-xl sm:text-2xl font-bold text-indigo-600 mb-4">How to Use Hiring FMS 2.0</h1>
+                <div class="space-y-3 sm:space-y-4 text-gray-700 text-xs sm:text-sm leading-relaxed">
+                    <p>Welcome to the <strong>Hiring FMS 2.0</strong>. This guide outlines how to use the system for managing hiring requirements.</p>
+                    <div>
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mt-2 sm:mt-3 mb-1">1. Adding a New Requirement</h2>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Click the <strong class="text-indigo-600">"Add Requirement"</strong> button. This should open the designated Google Form.</li>
+                            <li>Fill in the Google Form with all requirement details (Department, Role, No. of Positions, etc.) and submit it.</li>
+                            <li>New entries will appear in the FMS table after the next data sync (click 🔄).</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mt-2 sm:mt-3 mb-1">2. Viewing and Managing Requirements</h2>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>All requirements are listed in the main table with their current status.</li>
+                            <li>Use the <strong>search bar</strong> to find specific requirements (e.g., by UID, Role, Department).</li>
+                            <li>Use the <strong>filters</strong> to narrow down the list by Status, Date, Department, or Role.</li>
+                            <li>Click the <span class="inline-flex items-center justify-center h-5 w-5 bg-blue-100 text-blue-600 rounded-full align-middle">👁️</span> icon for detailed information and to take actions on a requirement.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mt-2 sm:mt-3 mb-1">3. Processing Requirements Through Hiring Stages</h2>
+                        <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Open <strong>Requirement Details</strong> by clicking the 👁️ icon. The "Hiring Stage Processing" section shows the pipeline.</li>
+                            <li>For each pending stage, a "Take Action" button (e.g., "Mark JD Complete") will be available.
+                                <ul class="list-circle list-inside ml-5 space-y-1">
+                                    <li>If the `Take Action (...)` field for that stage contains a Google Form URL, clicking the button will open that Google Form in a new popup modal. After you submit the form and close this popup, the FMS will attempt to sync the data to reflect changes.</li>
+                                    <li>If the `Take Action (...)` field is empty or contains plain text instructions, clicking the button will open a confirmation popup. Review instructions, then click "Mark Complete" to update the stage.</li>
+                                </ul>
+                            </li>
+                            <li>The system automatically updates the entry's status and refreshes the view after a stage is marked complete (either via the confirmation popup or after the Google Form popup is closed and data is synced).</li>
+                            <li><strong>Stage 1: Job Description & Posting:</strong> Mark as complete once JD is finalized and posted.</li>
+                            <li><strong>Stage 2: Filtering CVs:</strong> Mark as complete after CVs are screened. Candidate names can be recorded here.</li>
+                            <li><strong>Stage 3: 1st Round of Interview:</strong> Mark as complete after initial interviews.</li>
+                            <li><strong>Stage 4: Final Round of Interview:</strong> Mark as complete after final interviews. Record the `Final Decision` (e.g., Selected, Rejected, On Hold) and any `Comments`.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mt-2 sm:mt-3 mb-1">4. Task Responsibilities</h2> <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Click the <strong>“Responsibilities”</strong> button to view details on who typically performs each stage, how, and when.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h2 class="text-md sm:text-lg font-semibold text-indigo-500 mt-2 sm:mt-3 mb-1">5. Syncing Data</h2> <ul class="list-disc list-inside ml-4 space-y-1">
+                            <li>Click the <strong>🔄 Sync icon</strong> in the top header to refresh and load the latest data from the Google Sheet. This is important after adding entries via the form or if backend data changes.</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4 sm:mt-6 p-3 sm:p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md">
+                        <p class="font-bold">🔧 Important Notes for Hiring FMS 2.0:</p>
+                        <ul class="list-disc list-inside ml-4">
+                            <li>Ensure the <strong>Google Form URL</strong> for "Add Requirement" is correctly set up in the script.</li>
+                            <li>The <strong>API Endpoint URL</strong> must point to a Google Apps Script that can fetch data and (crucially for updates) handle data modifications via POST requests.</li>
+                            <li>Field names are case-sensitive and must match those in your Google Sheet and the sample data provided (e.g., `No.Of Possitions`, `Filtering the CVs Candidate Name`).</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mt-4 sm:mt-6 text-right">
+                    <button type="button" id="okHowToUseModalButton" class="btn btn-primary">OK</button>
+                </div>
+            </section>
+        </div></div>
+
+        <div id="stageActionModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-white">
+                <span id="closeStageActionModalButton" class="close-button">&times;</span>
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-700 mb-3" id="stageActionModalTitle">Confirm Stage Action</h2>
+                <div id="stageActionModalContent" class="text-sm text-gray-600 space-y-3 mb-4">
+                    <p id="stageActionModalMessage"></p>
+                    <div id="stageActionModalInstructions" class="p-2 bg-gray-50 rounded-md border border-gray-200 break-words" style="display:none;">
+                        <strong class="text-gray-700">Instructions/Reference:</strong>
+                        <p id="stageActionModalInstructionsText" class="mt-1 whitespace-pre-wrap"></p>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 flex justify-end space-x-3">
+                    <button type="button" id="stageActionModalCancelButton" class="btn btn-secondary">Cancel</button>
+                    <button type="button" id="stageActionModalConfirmButton" class="btn btn-success">Mark Complete</button>
+                </div>
+            </section>
+        </div></div>
+
+        <div id="googleFormActionModal" class="modal"><div class="modal-content-wrapper">
+            <section class="modal-content bg-gray-50">
+                <span id="closeGoogleFormActionModalButton" class="close-button">&times;</span>
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-2 text-center" id="googleFormActionModalTitle">Complete Action via Form</h2>
+                 <p class="text-xs sm:text-sm text-gray-500 text-center mb-1 sm:mb-2">Submit the form below. Closing this popup will attempt to sync data.</p>
+                <iframe id="googleFormActionIframe" src="about:blank" frameborder="0" marginheight="0" marginwidth="0">Loading Form…</iframe>
+            </section>
+        </div></div>
+
+
+        <section id="entriesListSection" class="mb-6 sm:mb-10">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-700 mb-4 sm:mb-6">All Hiring Requirements</h2>
+            <div class="flex flex-col md:flex-row justify-between items-center mb-3 sm:mb-4 space-y-3 md:space-y-0 md:space-x-4">
+                <div id="searchInputContainer" class="w-full md:w-auto md:flex-shrink-0">
+                    <input type="text" id="searchInput" placeholder="Search by UID, Role, Dept, Candidate..." class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm">
+                </div>
+                <div id="filterControlsContainer" class="w-full md:w-auto flex flex-col sm:flex-row sm:flex-wrap gap-2 items-center md:justify-end">
+                    <div class="filter-item w-full sm:w-auto">
+                        <select id="statusFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm">
+                            <option value="">All Statuses</option>
+                        </select>
+                    </div>
+                     <div class="filter-item w-full sm:w-auto">
+                        <select id="departmentFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="filter-item w-full sm:w-auto">
+                        <select id="roleFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm">
+                            <option value="">All Roles</option>
+                        </select>
+                    </div>
+                    <div class="filter-item w-full sm:w-auto">
+                        <input type="date" id="dateStartFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm" placeholder="Start Date (Timestamp)">
+                    </div>
+                    <div class="filter-item w-full sm:w-auto">
+                        <input type="date" id="dateEndFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm" placeholder="End Date (Timestamp)">
+                    </div>
+                    <div class="filter-item w-full sm:w-auto">
+                        <select id="actionStatusFilter" class="p-2 border border-gray-300 rounded-md shadow-sm w-full text-sm">
+                            <option value="">All Actions</option>
+                            <option value="overdue">Overdue Actions</option>
+                            <option value="upcoming">Upcoming Actions (Next 7 Days)</option>
+                        </select>
+                    </div>
+                     <button id="clearFiltersButton" class="btn btn-warning text-sm p-2 w-full sm:w-auto">Clear Filters</button>
+                </div>
+            </div>
+            <div id="tableStatus" class="text-center p-4 text-gray-500">Loading entries...</div>
+            <div class="table-container overflow-x-auto bg-white rounded-lg shadow">
+                <table class="min-w-full divide-y divide-gray-200 responsive-table">
+                    <thead id="entriesTableHead" class="bg-gray-50">
+                        <tr>
+                            </tr>
+                    </thead>
+                    <tbody id="entriesTableBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+             <div id="paginationControls" class="mt-3 sm:mt-4 flex justify-center items-center space-x-1 sm:space-x-2"></div>
+        </section>
+    </div>
+
+    <div id="messageAlertModal" class="modal"><div class="modal-content-wrapper">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeAlertModal()">&times;</span>
+            <p id="modalMessage" class="text-gray-700 text-center"></p>
+            <div class="mt-6 text-center default-modal-buttons"><button onclick="closeAlertModal()" class="btn btn-primary">OK</button></div>
+            <div class="mt-6 flex justify-center space-x-3 confirm-buttons" style="display:none;"><button id="modalCancelButton" class="btn btn-secondary">Cancel</button><button id="modalConfirmButton" class="btn btn-danger">Confirm</button></div>
+            <div class="mt-6 flex justify-center space-x-3 custom-choice-buttons" style="display:none;">
+                </div>
+        </div>
+    </div></div>
+
+    <footer class="py-4 sm:py-6 text-center text-xs sm:text-sm text-gray-500">
+        © 2025 Your Company Name. All rights reserved. </footer>
+
+    <script>
+        // --- CONFIGURATION & GLOBAL VARS ---
+        const VIEW_ENTRIES_URL = 'https://script.google.com/macros/s/AKfycbx3dsL4mC9fARakzZhoDHCFXdM7P--iJTSdqZXmSdAmxxVk0h_WfaPma-LPJ8tuEWD2eA/exec';
+        const MODIFY_ENTRIES_URL = 'https://script.google.com/macros/s/AKfycbx3dsL4mC9fARakzZhoDHCFXdM7P--iJTSdqZXmSdAmxxVk0h_WfaPma-LPJ8tuEWD2eA/exec';
+        const GOOGLE_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdN0zJExxbNFvQdV3-a6QpAp7sCtX5n_cJsYG8U-MaRXz5L1A/viewform';
+
+        const ITEMS_PER_PAGE = 5; // Changed to 5 rows per page
+        let currentPage = 1;
+        let allEntries = [];
+        let currentlyDisplayedEntries = []; // Holds the currently filtered and sorted list for pagination
+
+        // --- HIRING FMS 2.0 STATUSES ---
+        const STATUS_PENDING_JD = "Pending: JD & Posting";
+        const STATUS_PENDING_CV_FILTERING = "Pending: CV Filtering";
+        const STATUS_PENDING_FIRST_INTERVIEW = "Pending: 1st Interview";
+        const STATUS_PENDING_FINAL_INTERVIEW = "Pending: Final Interview";
+        const STATUS_SELECTED = "Selected";
+        const STATUS_REJECTED = "Rejected";
+        const STATUS_ON_HOLD = "On Hold";
+        const STATUS_OTHER_FINAL = "Other Final Status";
+
+        const STATUS_MAP = {
+            PENDING_JD: STATUS_PENDING_JD,
+            PENDING_CV_FILTERING: STATUS_PENDING_CV_FILTERING,
+            PENDING_FIRST_INTERVIEW: STATUS_PENDING_FIRST_INTERVIEW,
+            PENDING_FINAL_INTERVIEW: STATUS_PENDING_FINAL_INTERVIEW,
+            SELECTED: STATUS_SELECTED,
+            REJECTED: STATUS_REJECTED,
+            ON_HOLD: STATUS_ON_HOLD,
+            OTHER_FINAL: STATUS_OTHER_FINAL
+        };
+
+        const HIRING_STAGES = [
+            {
+                stageKey: 'JD_Posting',
+                name: "Job Description & Job Posting",
+                plannedKey: "Job Description & Job Posting Planned",
+                actualKey: "Job Description & Job Posting Actual",
+                timeDelayKey: "Job Description & Job Posting Time Delay",
+                takeActionKey: "Take Action (Job Description & Job Posting)",
+                nextStatus: STATUS_MAP.PENDING_CV_FILTERING,
+                buttonText: "Mark JD Complete"
+            },
+            {
+                stageKey: 'CV_Filtering',
+                name: "Filtering the CVs",
+                plannedKey: "Filtering the CVs Planned",
+                actualKey: "Filtering the CVs Actual",
+                candidateNameKey: "Filtering the CVs Candidate Name",
+                timeDelayKey: "Filtering the CVs Time Delay",
+                takeActionKey: "Take Action (Filtering the CVs )",
+                nextStatus: STATUS_MAP.PENDING_FIRST_INTERVIEW,
+                buttonText: "Mark CV Filtering Complete"
+            },
+            {
+                stageKey: 'First_Interview',
+                name: "1st Round of Interview",
+                plannedKey: "1st Round of Interview Planned",
+                actualKey: "1st Round of Interview Actual",
+                timeDelayKey: "1st Round of Interview Time Delay",
+                takeActionKey: "Take Action (1st Round of Interview)",
+                nextStatus: STATUS_MAP.PENDING_FINAL_INTERVIEW,
+                buttonText: "Mark 1st Interview Complete"
+            },
+            {
+                stageKey: 'Final_Interview',
+                name: "Final Round of Interview",
+                plannedKey: "Final Round of Interview Planned",
+                actualKey: "Final Round of Interview Actual",
+                finalDecisionKey: "Final Round of Interview Final Decision",
+                commentsKey: "Final Round of Interview Comments",
+                timeDelayKey: "Final Round of Interview Time Delay",
+                takeActionKey: "Take Action (Final Round of Interview)",
+                buttonText: "Mark Final Interview Complete"
+            }
+        ];
+
+        const tableHeadersConfig = [
+            { key: 'UID', label: 'UID' },
+            { key: 'Timestamp', label: 'Created On', isDate: true },
+            { key: 'Department Requirement', label: 'Department' },
+            { key: 'Requirement Role', label: 'Role' },
+            { key: 'No.Of Possitions', label: 'Positions' },
+            { key: HIRING_STAGES[1].candidateNameKey, label: 'Candidate(s)' },
+            { key: 'status', label: 'Status' },
+            { key: 'nextPlannedActionOn', label: 'Next Planned On', isDate: true, customRender: (entry) => getNextPlannedActionTimestamp(entry) },
+            { key: 'actions', label: 'Actions' }
+        ];
+
+
+        // --- DOM ELEMENTS ---
+        const addEntrySectionModal = document.getElementById('addEntrySectionModal');
+        const openEntryFormModalButton = document.getElementById('openEntryFormModalButton');
+        const closeEntryFormModalButton = document.getElementById('closeEntryFormModalButton');
+        const googleFormIframe = document.getElementById('googleFormIframe');
+
+        const doerInfoModal = document.getElementById('doerInfoModal');
+        const openDoerInfoModalButton = document.getElementById('openDoerInfoModalButton');
+        const closeDoerInfoModalButton = document.getElementById('closeDoerInfoModalButton');
+        const okDoerInfoModalButton = document.getElementById('okDoerInfoModalButton');
+
+        const howToUseModal = document.getElementById('howToUseModal');
+        const openHowToUseModalButton = document.getElementById('openHowToUseModalButton');
+        const closeHowToUseModalButton = document.getElementById('closeHowToUseModalButton');
+        const okHowToUseModalButton = document.getElementById('okHowToUseModalButton');
+
+        const openBackendDataButton = document.getElementById('openBackendDataButton');
+
+
+        const entryDetailsModal = document.getElementById('entryDetailsModal');
+        const detailsModalTitle = document.getElementById('detailsModalTitle');
+        const detailsModalSubtitle = document.getElementById('detailsModalSubtitle');
+        const detailsModalContent = document.getElementById('detailsModalContent');
+
+        const messageAlertModal = document.getElementById('messageAlertModal');
+        const modalMessage = document.getElementById('modalMessage');
+        const defaultModalButtons = messageAlertModal.querySelector('.default-modal-buttons');
+        const confirmModalButtons = messageAlertModal.querySelector('.confirm-buttons');
+        const modalConfirmButton = document.getElementById('modalConfirmButton');
+        const modalCancelButton = document.getElementById('modalCancelButton');
+        const customChoiceButtonsContainer = messageAlertModal.querySelector('.custom-choice-buttons');
+
+        // Stage Action Modal Elements (for manual confirmation)
+        const stageActionModal = document.getElementById('stageActionModal');
+        const stageActionModalTitle = document.getElementById('stageActionModalTitle');
+        const stageActionModalMessage = document.getElementById('stageActionModalMessage');
+        const stageActionModalInstructions = document.getElementById('stageActionModalInstructions');
+        const stageActionModalInstructionsText = document.getElementById('stageActionModalInstructionsText');
+        const stageActionModalConfirmButton = document.getElementById('stageActionModalConfirmButton');
+        const stageActionModalCancelButton = document.getElementById('stageActionModalCancelButton');
+        const closeStageActionModalButton = document.getElementById('closeStageActionModalButton');
+
+        // Google Form Action Modal Elements (for iframe)
+        const googleFormActionModal = document.getElementById('googleFormActionModal');
+        const googleFormActionModalTitle = document.getElementById('googleFormActionModalTitle');
+        const googleFormActionIframe = document.getElementById('googleFormActionIframe');
+        const closeGoogleFormActionModalButton = document.getElementById('closeGoogleFormActionModalButton');
+
+
+        const entriesTableHead = document.getElementById('entriesTableHead');
+        const entriesTableBody = document.getElementById('entriesTableBody');
+        const tableStatus = document.getElementById('tableStatus');
+        const searchInput = document.getElementById('searchInput');
+        const paginationControls = document.getElementById('paginationControls');
+
+        const scorecardTotalRequirements = document.getElementById('scorecardTotalRequirements');
+        const scorecardPendingJD = document.getElementById('scorecardPendingJD');
+        const scorecardPendingCVFiltering = document.getElementById('scorecardPendingCVFiltering');
+        const scorecardPendingFirstInterview = document.getElementById('scorecardPendingFirstInterview');
+        const scorecardPendingFinalInterview = document.getElementById('scorecardPendingFinalInterview');
+        const scorecardSelected = document.getElementById('scorecardSelected');
+        const scorecardOtherFinal = document.getElementById('scorecardOtherFinal');
+
+
+        const entranceAnimationOverlay = document.getElementById('entranceAnimationOverlay');
+
+        const statusFilter = document.getElementById('statusFilter');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const roleFilter = document.getElementById('roleFilter');
+        const dateStartFilter = document.getElementById('dateStartFilter');
+        const dateEndFilter = document.getElementById('dateEndFilter');
+        const actionStatusFilter = document.getElementById('actionStatusFilter');
+        const clearFiltersButton = document.getElementById('clearFiltersButton');
+
+
+        // --- MODAL CONTROL FUNCTIONS ---
+        function openModal(modalElement) {
+            const modalContent = modalElement.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.classList.remove('modal-popup-active');
+                void modalContent.offsetWidth;
+                modalContent.classList.add('modal-popup-active');
+            }
+            modalElement.style.display = "flex";
+        }
+        function closeModal(modalElement) {
+            modalElement.style.display = "none";
+        }
+
+        function openDoerModal() { openModal(doerInfoModal); }
+        function openHowToUse() { openModal(howToUseModal); }
+
+        function openEntryDetailsModal(entryId) {
+            const entry = allEntries.find(e => e.UID === entryId);
+            if (!entry) {
+                showUserAlert("Error: Could not find entry details for UID: " + entryId, "error");
+                return;
+            }
+            const candidateName = entry[HIRING_STAGES[1].candidateNameKey] || 'N/A';
+            detailsModalTitle.textContent = `Requirement: ${entry['Requirement Role'] || entry.UID} (Dept: ${entry['Department Requirement'] || 'N/A'})`;
+            detailsModalSubtitle.textContent = `Candidate(s): ${candidateName} - Current Status: ${entry.status || determineHiringStatus(entry)}`;
+            populateDetailsModal(entry);
+            openModal(entryDetailsModal);
+        }
+
+        function showUserAlert(message, type = 'info', onConfirm = null, customButtons = null) {
+            modalMessage.textContent = message;
+            openModal(messageAlertModal);
+
+            defaultModalButtons.style.display = 'none';
+            confirmModalButtons.style.display = 'none';
+            customChoiceButtonsContainer.style.display = 'none';
+            customChoiceButtonsContainer.innerHTML = '';
+
+            if (type === 'confirm' && onConfirm) {
+                confirmModalButtons.style.display = 'flex';
+                modalConfirmButton.textContent = 'Confirm';
+                const newConfirmButton = modalConfirmButton.cloneNode(true);
+                modalConfirmButton.parentNode.replaceChild(newConfirmButton, modalConfirmButton);
+                newConfirmButton.onclick = () => { onConfirm(); closeModal(messageAlertModal); };
+
+                const newCancelButton = modalCancelButton.cloneNode(true);
+                modalCancelButton.parentNode.replaceChild(newCancelButton, modalCancelButton);
+                newCancelButton.onclick = closeAlertModal;
+
+            } else if (type === 'choice' && customButtons) {
+                customChoiceButtonsContainer.style.display = 'flex';
+                customButtons.forEach(btnConfig => {
+                    const button = document.createElement('button');
+                    button.textContent = btnConfig.text;
+                    button.className = `btn ${btnConfig.class || 'btn-secondary'} ml-2`;
+                    button.onclick = () => {
+                        closeAlertModal();
+                        btnConfig.handler();
+                    };
+                    customChoiceButtonsContainer.appendChild(button);
+                });
+                const cancelBtnChoice = document.createElement('button');
+                cancelBtnChoice.textContent = "Cancel";
+                cancelBtnChoice.className = "btn btn-secondary ml-2";
+                cancelBtnChoice.onclick = closeAlertModal;
+                customChoiceButtonsContainer.insertBefore(cancelBtnChoice, customChoiceButtonsContainer.firstChild);
+
+            } else {
+                defaultModalButtons.style.display = 'block';
+                 const okButton = defaultModalButtons.querySelector('button');
+                 const newOkButton = okButton.cloneNode(true);
+                 okButton.parentNode.replaceChild(newOkButton, okButton);
+                 newOkButton.onclick = closeAlertModal;
+            }
+
+            modalMessage.classList.remove('text-green-600', 'text-red-600', 'text-yellow-600');
+            if (type === 'success') modalMessage.classList.add('text-green-600');
+            else if (type === 'error') modalMessage.classList.add('text-red-600');
+            else if (type === 'warning') modalMessage.classList.add('text-yellow-600');
+        }
+        function closeAlertModal() { closeModal(messageAlertModal); }
+
+
+        function openStageActionModal(entry, stage, stageIndex) {
+            const actionInstruction = entry[stage.takeActionKey];
+            const isGoogleForm = actionInstruction && typeof actionInstruction === 'string' && actionInstruction.includes('docs.google.com/forms');
+
+            if (isGoogleForm) {
+                if(googleFormActionModalTitle) googleFormActionModalTitle.textContent = `Action: ${stage.name}`;
+                googleFormActionIframe.src = actionInstruction + (actionInstruction.includes('?') ? '&embedded=true' : '?embedded=true');
+                if(googleFormActionModal) googleFormActionModal.dataset.currentEntryUID = entry.UID; // Store UID for sync on close
+                openModal(googleFormActionModal);
+            } else {
+                stageActionModalTitle.textContent = `Confirm Stage: ${stage.name}`;
+                stageActionModalMessage.textContent = `Are you sure you want to mark "${stage.name}" as complete for UID ${entry.UID}?`;
+
+                if (actionInstruction && !(String(actionInstruction).startsWith('http://') || String(actionInstruction).startsWith('https://'))) {
+                    stageActionModalInstructionsText.textContent = actionInstruction;
+                    stageActionModalInstructions.style.display = 'block';
+                } else if (actionInstruction) {
+                    stageActionModalInstructionsText.innerHTML = `Associated Link (for reference, copy if needed): <a href="${actionInstruction}" target="_blank" class="text-indigo-600 hover:underline">${actionInstruction}</a>`;
+                    stageActionModalInstructions.style.display = 'block';
+                } else {
+                    stageActionModalInstructions.style.display = 'none';
+                }
+
+                const newConfirmBtn = stageActionModalConfirmButton.cloneNode(true);
+                stageActionModalConfirmButton.parentNode.replaceChild(newConfirmBtn, stageActionModalConfirmButton);
+                newConfirmBtn.textContent = stage.buttonText || "Mark Complete";
+                newConfirmBtn.onclick = () => {
+                    processHiringStep(entry.UID, newConfirmBtn, stageIndex);
+                    closeModal(stageActionModal);
+                };
+                openModal(stageActionModal);
+            }
+        }
+
+
+        window.onclick = (event) => {
+            const modals = [addEntrySectionModal, doerInfoModal, entryDetailsModal, messageAlertModal, howToUseModal, stageActionModal, googleFormActionModal];
+            modals.forEach(modal => {
+                if (modal && modal.style.display === "flex" && event.target === modal) {
+                    closeModal(modal);
+                    if (modal.id === 'addEntrySectionModal') { // Sync after closing "Add Requirement" modal
+                        googleFormIframe.src = 'about:blank'; // Clear iframe
+                        handleAddRequirementModalClose();
+                    } else if (modal.id === 'googleFormActionModal') { // Sync after closing stage-specific Google Form modal
+                        googleFormActionIframe.src = 'about:blank'; // Clear iframe
+                        handleGoogleFormActionModalClose();
+                    }
+                }
+            });
+        }
+
+        function handleGoogleFormActionModalClose() { // Used for stage-specific Google Forms
+            const currentEntryUID = googleFormActionModal.dataset.currentEntryUID;
+            triggerSync("Attempting to sync data after form interaction...", currentEntryUID);
+            if(googleFormActionModal.dataset.currentEntryUID) delete googleFormActionModal.dataset.currentEntryUID;
+        }
+
+        function handleAddRequirementModalClose() { // Used for the main "Add Requirement" form
+             triggerSync("Attempting to sync data after adding new requirement...", null); // No specific UID needed here as we fetch all
+        }
+
+        function triggerSync(message, entryUIDToRefreshDetails = null) {
+            showUserAlert(message, "info");
+            const syncButtonForAnimation = document.getElementById('syncButton');
+            const svgIcon = syncButtonForAnimation ? syncButtonForAnimation.querySelector('svg') : null;
+            if (svgIcon) svgIcon.classList.add('rotate-animate');
+            if (syncButtonForAnimation) setButtonLoading(true, syncButtonForAnimation);
+
+            fetchEntries().then(() => {
+                showUserAlert("Data synced. Please check for updates.", "success");
+                // applyFiltersAndSearch(); // This is now called within fetchEntries after sorting
+
+                // If an entry details modal was open for a specific entry (relevant for stage-specific forms)
+                if (entryDetailsModal.style.display === "flex" && entryUIDToRefreshDetails) {
+                    const updatedEntry = allEntries.find(e => e.UID === entryUIDToRefreshDetails);
+                    if (updatedEntry) {
+                        populateDetailsModal(updatedEntry);
+                        const candidateName = updatedEntry[HIRING_STAGES[1].candidateNameKey] || 'N/A';
+                        detailsModalSubtitle.textContent = `Candidate(s): ${candidateName} - Current Status: ${updatedEntry.status || determineHiringStatus(updatedEntry)}`;
+                    } else {
+                        closeModal(entryDetailsModal);
+                    }
+                }
+            }).catch(error => {
+                console.error("Error during sync:", error);
+                showUserAlert("Error syncing data: " + error.message, "error");
+            }).finally(() => {
+                if (svgIcon) svgIcon.classList.remove('rotate-animate');
+                if (syncButtonForAnimation) setButtonLoading(false, syncButtonForAnimation);
+            });
+        }
+
+
+        // --- UTILITY FUNCTIONS ---
+        function setButtonLoading(isLoading, button, spinner) {
+            if (!button) return;
+            button.disabled = isLoading;
+            button.classList.toggle('opacity-50', isLoading);
+            button.classList.toggle('cursor-not-allowed', isLoading);
+        }
+
+        function formatDateForDisplay(dateTimeStringOrObject) {
+            if (!dateTimeStringOrObject || dateTimeStringOrObject === 'N/A' || String(dateTimeStringOrObject).trim() === "" || dateTimeStringOrObject === "SKIPPED") return 'N/A';
+            let date;
+            if (dateTimeStringOrObject instanceof Date) {
+                date = dateTimeStringOrObject;
+            } else {
+                const customFormatRegex = /^(\d{1,2})-([A-Za-z]{3})-(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) (AM|PM)$/;
+                const isoWithMillisRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+                const isoDateOnlyRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+                let match = typeof dateTimeStringOrObject === 'string' ? dateTimeStringOrObject.match(customFormatRegex) : null;
+
+                if (match) {
+                    const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+                    let hours = parseInt(match[4], 10);
+                    if (match[7].toUpperCase() === 'PM' && hours < 12) hours += 12;
+                    if (match[7].toUpperCase() === 'AM' && hours === 12) hours = 0;
+                    date = new Date(Date.UTC(parseInt(match[3],10), months[match[2]], parseInt(match[1],10), hours, parseInt(match[5],10), parseInt(match[6],10)));
+                } else if (typeof dateTimeStringOrObject === 'string' && isoWithMillisRegex.test(dateTimeStringOrObject)) {
+                    date = new Date(dateTimeStringOrObject);
+                } else if (typeof dateTimeStringOrObject === 'string' && isoDateOnlyRegex.test(dateTimeStringOrObject)) {
+                    const parts = dateTimeStringOrObject.split('-');
+                    date = new Date(Date.UTC(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+                } else {
+                    date = new Date(dateTimeStringOrObject);
+                }
+            }
+
+            if (isNaN(date.getTime())) {
+                return String(dateTimeStringOrObject);
+            }
+
+            const options = {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+            };
+            let formatted = new Intl.DateTimeFormat('en-GB', options).format(date);
+            formatted = formatted.replace(',', '').replace(/(\d{2})-([A-Za-z]{3})-(\d{4})/, '$1-$2-$3');
+            formatted = formatted.replace(/\./g, '').toUpperCase();
+            return formatted;
+        }
+
+
+         function formatDateForInput(date) {
+            if (!(date instanceof Date) || isNaN(date.getTime())) {
+                date = new Date();
+            }
+            const day = String(date.getDate()).padStart(2, '0');
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const monthName = months[date.getMonth()];
+            const year = date.getFullYear();
+            let hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const strHours = String(hours).padStart(2, '0');
+            return `${day}-${monthName}-${year} ${strHours}:${minutes}:${seconds} ${ampm}`;
+        }
+
+        function addDays(dateInput, days) {
+            let baseDate;
+            if (dateInput instanceof Date) {
+                baseDate = new Date(dateInput.getTime());
+            } else if (typeof dateInput === 'string') {
+                const parsed = parseFlexibleDate(dateInput);
+                if (parsed && !isNaN(parsed.getTime())) {
+                    baseDate = parsed;
+                } else {
+                    baseDate = new Date();
+                }
+            } else {
+                baseDate = new Date();
+            }
+            baseDate.setDate(baseDate.getDate() + days);
+            return baseDate;
+        }
+
+        function parseFlexibleDate(dateStr) {
+            if (!dateStr || typeof dateStr !== 'string') return null;
+            const customFormatRegex = /^(\d{1,2})-([A-Za-z]{3})-(\d{4}) (\d{1,2}):(\d{2}):(\d{2}) (AM|PM)$/;
+            let match = dateStr.match(customFormatRegex);
+            if (match) {
+                const months = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+                let hours = parseInt(match[4], 10);
+                if (match[7].toUpperCase() === 'PM' && hours < 12) hours += 12;
+                if (match[7].toUpperCase() === 'AM' && hours === 12) hours = 0;
+                return new Date(Date.UTC(parseInt(match[3],10), months[match[2]], parseInt(match[1],10), hours, parseInt(match[5],10), parseInt(match[6],10)));
+            }
+            const standardDate = new Date(dateStr); // This can parse ISO strings and some other formats
+            if (!isNaN(standardDate.getTime())) return standardDate;
+            return null;
+        }
+
+
+        function calculateTimeDelay(actualTimestamp, plannedTimestamp) {
+            if (!actualTimestamp || !plannedTimestamp || actualTimestamp === "N/A" || plannedTimestamp === "N/A" || String(actualTimestamp).trim() === "" || String(plannedTimestamp).trim() === "" || actualTimestamp === "SKIPPED" || plannedTimestamp === "SKIPPED") return "<span class='text-gray-400'>N/A</span>";
+
+            const actual = parseFlexibleDate(actualTimestamp);
+            const planned = parseFlexibleDate(plannedTimestamp);
+
+            if (!actual || isNaN(actual.getTime()) || !planned || isNaN(planned.getTime())) {
+                 return "<span class='text-gray-400'>Invalid Date</span>";
+            }
+
+            const diff = actual.getTime() - planned.getTime();
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            let delayClass = 'delay-ontime';
+            let delayText = "On Time";
+
+            if (diff > 0) {
+                delayClass = 'delay-late';
+                if (days > 0) delayText = `${days} day(s) late`;
+                else if (hours > 0) delayText = `${hours} hour(s) late`;
+                else if (minutes > 0) delayText = `${minutes} min(s) late`;
+                else delayText = "Slightly Late";
+            } else if (diff < 0) {
+                delayClass = 'delay-early';
+                const absDays = Math.abs(days);
+                const absHours = Math.abs(hours);
+                const absMinutes = Math.abs(minutes);
+                if (absDays > 0) delayText = `${absDays} day(s) early`;
+                else if (absHours > 0) delayText = `${absHours} hour(s) early`;
+                else if (absMinutes > 0) delayText = `${absMinutes} min(s) early`;
+                else delayText = "Slightly Early";
+            }
+            return `<span class="${delayClass}">${delayText}</span>`;
+        }
+
+        // --- SCORECARD FUNCTIONS ---
+        function renderScorecards(entries) {
+            scorecardTotalRequirements.textContent = entries.length;
+            let pendingJDCount = 0;
+            let pendingCVCount = 0;
+            let pendingInt1Count = 0;
+            let pendingIntFinalCount = 0;
+            let selectedCount = 0;
+            let otherFinalCount = 0;
+
+            entries.forEach(entry => {
+                const status = entry.status || determineHiringStatus(entry);
+                switch (status) {
+                    case STATUS_MAP.PENDING_JD: pendingJDCount++; break;
+                    case STATUS_MAP.PENDING_CV_FILTERING: pendingCVCount++; break;
+                    case STATUS_MAP.PENDING_FIRST_INTERVIEW: pendingInt1Count++; break;
+                    case STATUS_MAP.PENDING_FINAL_INTERVIEW: pendingIntFinalCount++; break;
+                    case STATUS_MAP.SELECTED: selectedCount++; break;
+                    case STATUS_MAP.REJECTED:
+                    case STATUS_MAP.ON_HOLD:
+                    case STATUS_MAP.OTHER_FINAL: otherFinalCount++; break;
+                }
+            });
+
+            scorecardPendingJD.textContent = pendingJDCount;
+            scorecardPendingCVFiltering.textContent = pendingCVCount;
+            scorecardPendingFirstInterview.textContent = pendingInt1Count;
+            scorecardPendingFinalInterview.textContent = pendingIntFinalCount;
+            scorecardSelected.textContent = selectedCount;
+            scorecardOtherFinal.textContent = otherFinalCount;
+        }
+
+
+        function initializeTableHeaders() {
+            const headerRow = entriesTableHead.querySelector('tr') || entriesTableHead.appendChild(document.createElement('tr'));
+            headerRow.innerHTML = '';
+
+            tableHeadersConfig.forEach(config => {
+                const th = document.createElement('th');
+                th.className = 'px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
+                th.textContent = config.label;
+                headerRow.appendChild(th);
+            });
+        }
+
+        // --- EVENT LISTENERS & INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTableHeaders();
+            fetchEntries().then(populateFilterDropdowns);
+
+            openEntryFormModalButton.addEventListener('click', () => {
+                googleFormIframe.src = GOOGLE_FORM_URL + "?embedded=true";
+                openModal(addEntrySectionModal);
+            });
+            closeEntryFormModalButton.addEventListener('click', () => {
+                closeModal(addEntrySectionModal);
+                googleFormIframe.src = 'about:blank'; // Clear iframe
+                handleAddRequirementModalClose(); // Trigger sync
+            });
+
+            openDoerInfoModalButton.addEventListener('click', openDoerModal);
+            closeDoerInfoModalButton.addEventListener('click', () => closeModal(doerInfoModal));
+            if(okDoerInfoModalButton) okDoerInfoModalButton.addEventListener('click', () => closeModal(doerInfoModal));
+
+            if(openBackendDataButton) {
+                openBackendDataButton.addEventListener('click', () => {
+                    window.open('https://docs.google.com/spreadsheets/d/1prNBcicdKg6tG9-i8ROMTzCNKOvVlLFv9VueLx3GNJc/edit?gid=1104637752#gid=1104637752', '_blank');
+                });
+            }
+
+
+            openHowToUseModalButton.addEventListener('click', openHowToUse);
+            closeHowToUseModalButton.addEventListener('click', () => closeModal(howToUseModal));
+            okHowToUseModalButton.addEventListener('click', () => closeModal(howToUseModal));
+
+            modalCancelButton.onclick = closeAlertModal;
+
+            if(closeStageActionModalButton) closeStageActionModalButton.onclick = () => closeModal(stageActionModal);
+            if(stageActionModalCancelButton) stageActionModalCancelButton.onclick = () => closeModal(stageActionModal);
+
+            if (closeGoogleFormActionModalButton) {
+                closeGoogleFormActionModalButton.onclick = () => {
+                    closeModal(googleFormActionModal);
+                    googleFormActionIframe.src = 'about:blank';
+                    handleGoogleFormActionModalClose();
+                };
+            }
+
+
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            const syncButton = document.getElementById('syncButton');
+            if (syncButton) {
+                syncButton.addEventListener('click', () => {
+                   triggerSync("Syncing data manually...", null);
+                });
+            }
+
+            searchInput.addEventListener('input', applyFiltersAndSearch);
+            statusFilter.addEventListener('change', applyFiltersAndSearch);
+            departmentFilter.addEventListener('change', applyFiltersAndSearch);
+            roleFilter.addEventListener('change', applyFiltersAndSearch);
+            dateStartFilter.addEventListener('change', applyFiltersAndSearch);
+            dateEndFilter.addEventListener('change', applyFiltersAndSearch);
+            actionStatusFilter.addEventListener('change', applyFiltersAndSearch);
+
+            clearFiltersButton.addEventListener('click', () => {
+                searchInput.value = '';
+                statusFilter.value = '';
+                departmentFilter.value = '';
+                roleFilter.value = '';
+                dateStartFilter.value = '';
+                dateEndFilter.value = '';
+                actionStatusFilter.value = '';
+                applyFiltersAndSearch();
+            });
+
+        });
+
+        function determineHiringStatus(entry) {
+            const finalInterviewStage = HIRING_STAGES.find(s => s.stageKey === 'Final_Interview');
+            if (entry[finalInterviewStage.actualKey]) {
+                const decision = entry[finalInterviewStage.finalDecisionKey]?.trim().toLowerCase();
+                if (decision === 'selected') return STATUS_MAP.SELECTED;
+                if (decision === 'rejected') return STATUS_MAP.REJECTED;
+                if (decision === 'on hold' || decision === 'hold') return STATUS_MAP.ON_HOLD;
+                return STATUS_MAP.OTHER_FINAL;
+            }
+
+            const firstInterviewStage = HIRING_STAGES.find(s => s.stageKey === 'First_Interview');
+            if (entry[firstInterviewStage.actualKey]) return STATUS_MAP.PENDING_FINAL_INTERVIEW;
+
+            const cvFilteringStage = HIRING_STAGES.find(s => s.stageKey === 'CV_Filtering');
+            if (entry[cvFilteringStage.actualKey]) return STATUS_MAP.PENDING_FIRST_INTERVIEW;
+
+            const jdPostingStage = HIRING_STAGES.find(s => s.stageKey === 'JD_Posting');
+            if (entry[jdPostingStage.actualKey]) return STATUS_MAP.PENDING_CV_FILTERING;
+
+            return STATUS_MAP.PENDING_JD;
+        }
+
+
+        async function processHiringStep(entryUID, buttonElement, stageIndex) {
+            if(buttonElement) setButtonLoading(true, buttonElement);
+
+            const entryIdx = allEntries.findIndex(e => e.UID === entryUID);
+            if (entryIdx === -1) {
+                showUserAlert('Error: Entry not found for update.', 'error');
+                if(buttonElement) setButtonLoading(false, buttonElement);
+                return;
+            }
+
+            const now = new Date();
+            const entryToUpdateLocally = { ...allEntries[entryIdx] };
+            const currentStage = HIRING_STAGES[stageIndex];
+            const dataToUpdatePayload = {};
+
+            dataToUpdatePayload[currentStage.actualKey] = formatDateForInput(now);
+
+            const plannedTimestamp = entryToUpdateLocally[currentStage.plannedKey];
+            if (plannedTimestamp && plannedTimestamp !== "SKIPPED" && plannedTimestamp !== "N/A") {
+                const timeDelayString = calculateTimeDelay(dataToUpdatePayload[currentStage.actualKey], plannedTimestamp).replace(/<[^>]*>?/gm, '');
+                dataToUpdatePayload[currentStage.timeDelayKey] = timeDelayString;
+            } else {
+                dataToUpdatePayload[currentStage.timeDelayKey] = "N/A";
+            }
+
+            let newStatusDeterminedByThisStep = currentStage.nextStatus;
+
+            if (currentStage.stageKey === 'Final_Interview') {
+                const finalDecision = entryToUpdateLocally[currentStage.finalDecisionKey]?.trim().toLowerCase();
+                if (finalDecision === 'selected') newStatusDeterminedByThisStep = STATUS_MAP.SELECTED;
+                else if (finalDecision === 'rejected') newStatusDeterminedByThisStep = STATUS_MAP.REJECTED;
+                else if (finalDecision === 'on hold' || finalDecision === 'hold') newStatusDeterminedByThisStep = STATUS_MAP.ON_HOLD;
+                else if (finalDecision) newStatusDeterminedByThisStep = STATUS_MAP.OTHER_FINAL;
+                else {
+                    showUserAlert(`Please ensure 'Final Round of Interview Final Decision' is filled for UID ${entryUID} before marking this stage complete. This can be done by editing the Google Sheet directly and then syncing.`, 'warning');
+                    if(buttonElement) setButtonLoading(false, buttonElement);
+                    return;
+                }
+            } else if (stageIndex + 1 < HIRING_STAGES.length) {
+                const nextStage = HIRING_STAGES[stageIndex + 1];
+                dataToUpdatePayload[nextStage.plannedKey] = formatDateForInput(addDays(now, 2));
+            }
+
+
+            try {
+                const res = await fetch(`${MODIFY_ENTRIES_URL}?UID=${entryToUpdateLocally.UID}&action=updateEntry`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({jsonData: JSON.stringify({ UID: entryToUpdateLocally.UID, updates: dataToUpdatePayload })})
+                });
+
+                if (res.ok) {
+                    const responseData = await res.json().catch(() => ({}));
+                    showUserAlert(responseData.message || `Entry ${entryToUpdateLocally.UID} updated successfully. New status: "${newStatusDeterminedByThisStep}"`, 'success');
+
+                    Object.assign(allEntries[entryIdx], dataToUpdatePayload);
+                    allEntries[entryIdx].status = newStatusDeterminedByThisStep;
+
+                    applyFiltersAndSearch(); // This will re-sort and re-render
+                    if (entryDetailsModal.style.display === "flex") {
+                         const currentModalEntry = allEntries.find(e => e.UID === entryUID);
+                         if(currentModalEntry) {
+                            populateDetailsModal(currentModalEntry);
+                            detailsModalSubtitle.textContent = `Candidate(s): ${currentModalEntry[HIRING_STAGES[1].candidateNameKey] || 'N/A'} - Current Status: ${currentModalEntry.status}`;
+                         }
+                    }
+                } else {
+                    const errorResult = await res.json().catch(() => ({ message: 'Unknown error during update.' }));
+                    showUserAlert('Error updating status via API: ' + (errorResult.error || errorResult.message || res.statusText), 'error');
+                }
+            } catch (e) {
+                console.error('Error updating status:', e);
+                showUserAlert('Network error during update: ' + e.message + '. Local changes might not be saved to backend.', 'error');
+                Object.assign(allEntries[entryIdx], dataToUpdatePayload);
+                allEntries[entryIdx].status = newStatusDeterminedByThisStep;
+                applyFiltersAndSearch(); // This will re-sort and re-render
+                if (entryDetailsModal.style.display === "flex") {
+                    const currentModalEntry = allEntries.find(e => e.UID === entryUID);
+                    if(currentModalEntry) populateDetailsModal(currentModalEntry);
+                }
+            } finally {
+                if(buttonElement) setButtonLoading(false, buttonElement);
+            }
+        }
+
+        function populateDetailsModal(entry) {
+            detailsModalContent.innerHTML = '';
+
+            const modalContentSection = entryDetailsModal.querySelector('.modal-content');
+            const existingControlsGroup = modalContentSection.querySelector('.modal-controls-group');
+            if (existingControlsGroup) existingControlsGroup.remove();
+
+            const controlsGroup = document.createElement('div');
+            controlsGroup.className = 'modal-controls-group';
+
+            const syncStageButton = document.createElement('button');
+            syncStageButton.className = 'modal-control-button sync-btn btn-icon-only p-1.5';
+            syncStageButton.title = 'Refresh Entry Data';
+            syncStageButton.innerHTML = `<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>`;
+            syncStageButton.onclick = () => {
+                const svgIcon = syncStageButton.querySelector('svg');
+                if (svgIcon) svgIcon.classList.add('rotate-animate');
+                setButtonLoading(true, syncStageButton);
+                fetchEntries().then(() => { // fetchEntries now handles sorting and calls applyFiltersAndSearch
+                    const updatedEntry = allEntries.find(e => e.UID === entry.UID); // allEntries is now sorted
+                    if (updatedEntry) {
+                        populateDetailsModal(updatedEntry);
+                        detailsModalSubtitle.textContent = `Candidate(s): ${updatedEntry[HIRING_STAGES[1].candidateNameKey] || 'N/A'} - Current Status: ${updatedEntry.status || determineHiringStatus(updatedEntry)}`;
+                        showUserAlert("Entry details refreshed!", "success");
+                    } else {
+                        closeModal(entryDetailsModal);
+                        showUserAlert('Entry details may have changed or an error occurred during refresh.', 'info');
+                    }
+                }).catch(err => {
+                    showUserAlert('Error refreshing details: ' + err.message, 'error');
+                }).finally(() => {
+                    if (svgIcon) svgIcon.classList.remove('rotate-animate');
+                    setButtonLoading(false, syncStageButton);
+                });
+            };
+            controlsGroup.appendChild(syncStageButton);
+
+
+            const newCloseButton = document.createElement('button');
+            newCloseButton.className = 'modal-control-button close-btn';
+            newCloseButton.title = 'Close';
+            newCloseButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg>`;
+            newCloseButton.onclick = () => closeModal(entryDetailsModal);
+            controlsGroup.appendChild(newCloseButton);
+
+            if (modalContentSection) {
+                 modalContentSection.insertBefore(controlsGroup, modalContentSection.firstChild);
+            }
+
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'crm-card';
+
+            const overviewTitle = document.createElement('h2');
+            overviewTitle.textContent = 'Requirement Overview';
+            cardDiv.appendChild(overviewTitle);
+
+            const createSectionItem = (label, value, isHtml = false) => {
+                const item = document.createElement('div'); item.className = 'crm-description-item';
+                const lbl = document.createElement('div'); lbl.className = 'crm-label'; lbl.textContent = label + ':';
+                const val = document.createElement('div'); val.className = 'crm-value';
+                if (isHtml) {
+                    val.innerHTML = value || '<span class="text-gray-400">N/A</span>';
+                } else {
+                    val.textContent = value || 'N/A';
+                }
+                item.append(lbl, val);
+                return item;
+            };
+
+            const mainDetailsSection = document.createElement('div');
+            mainDetailsSection.className = 'crm-section';
+            mainDetailsSection.style.cssText = '--section-color: #3f51b5; --section-bg: rgba(63, 81, 181, 0.07);';
+            mainDetailsSection.innerHTML = `<div class="crm-section-header"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg><span>Requirement Information</span></div><div class="crm-section-content grid grid-cols-1 md:grid-cols-2 gap-x-4"></div>`;
+            const mainContent = mainDetailsSection.querySelector('.crm-section-content');
+
+            mainContent.appendChild(createSectionItem('UID', entry.UID));
+            mainContent.appendChild(createSectionItem('Timestamp (Created)', formatDateForDisplay(entry.Timestamp)));
+            mainContent.appendChild(createSectionItem('Department', entry['Department Requirement']));
+            mainContent.appendChild(createSectionItem('Role Required', entry['Requirement Role']));
+            mainContent.appendChild(createSectionItem('No. of Positions', entry['No.Of Possitions']));
+            mainContent.appendChild(createSectionItem('Step Code', entry['Step Code']));
+            mainContent.appendChild(createSectionItem('Overall Comments', entry.Comments));
+            mainContent.appendChild(createSectionItem('Current Status', entry.status || determineHiringStatus(entry)));
+            mainContent.appendChild(createSectionItem('Candidate Name(s) (from CV Filtering)', entry[HIRING_STAGES[1].candidateNameKey]));
+
+
+            cardDiv.appendChild(mainDetailsSection);
+
+            const stageProcessingSection = document.createElement('div');
+            stageProcessingSection.className = 'details-section mt-6';
+            const stageProcessingTitle = document.createElement('h3');
+            stageProcessingTitle.textContent = 'Hiring Stage Processing';
+            stageProcessingSection.appendChild(stageProcessingTitle);
+
+            const currentOverallStatus = entry.status || determineHiringStatus(entry);
+            let actionButtonAddedForCurrentPendingStage = false;
+
+            HIRING_STAGES.forEach((stage, index) => {
+                const stageDiv = document.createElement('div');
+                stageDiv.className = 'timeline-step';
+                let stageSpecificContent = '';
+                if (stage.stageKey === 'CV_Filtering') {
+                    stageSpecificContent += createSectionItem('Candidate Name(s)', entry[stage.candidateNameKey]).outerHTML;
+                }
+                if (stage.stageKey === 'Final_Interview') {
+                    stageSpecificContent += createSectionItem('Final Decision', entry[stage.finalDecisionKey]).outerHTML;
+                    stageSpecificContent += createSectionItem('Final Comments', entry[stage.commentsKey]).outerHTML;
+                }
+
+                stageDiv.innerHTML = `<strong>${stage.name}</strong>
+                                   <div class="timeline-details-grid mt-2">
+                                     ${createSectionItem('Planned', formatDateForDisplay(entry[stage.plannedKey])).outerHTML}
+                                     ${createSectionItem('Actual', formatDateForDisplay(entry[stage.actualKey])).outerHTML}
+                                     ${createSectionItem('Time Delay', calculateTimeDelay(entry[stage.actualKey], entry[stage.plannedKey]), true).outerHTML}
+                                     ${stageSpecificContent}
+                                   </div>`;
+
+                const isStageCompleted = !!entry[stage.actualKey];
+                let canTakeAction = !isStageCompleted;
+                if (index > 0) {
+                    const prevStage = HIRING_STAGES[index - 1];
+                    if (!entry[prevStage.actualKey]) {
+                        canTakeAction = false;
+                    }
+                }
+                const isProcessFinal = [STATUS_MAP.SELECTED, STATUS_MAP.REJECTED, STATUS_MAP.ON_HOLD, STATUS_MAP.OTHER_FINAL].includes(currentOverallStatus);
+
+                if (canTakeAction && !actionButtonAddedForCurrentPendingStage && (!isProcessFinal || stage.stageKey === 'Final_Interview')) {
+                     const actionButtonContainer = document.createElement('div');
+                     actionButtonContainer.className = 'action-button-group';
+                     const actionButton = document.createElement('button');
+                     actionButton.textContent = stage.buttonText;
+                     actionButton.className = 'btn btn-success btn-take-action';
+                     actionButton.onclick = () => {
+                        openStageActionModal(entry, stage, index);
+                     };
+                     actionButtonContainer.appendChild(actionButton);
+                     stageDiv.appendChild(actionButtonContainer);
+                     actionButtonAddedForCurrentPendingStage = true;
+                }
+                stageProcessingSection.appendChild(stageDiv);
+            });
+
+            cardDiv.appendChild(stageProcessingSection);
+            detailsModalContent.appendChild(cardDiv);
+        }
+
+
+        async function fetchEntries() {
+            tableStatus.textContent = 'Loading entries...';
+            tableStatus.classList.remove('hidden');
+            entriesTableBody.innerHTML = '';
+            paginationControls.innerHTML = '';
+            const entranceOverlay = document.getElementById('entranceAnimationOverlay');
+
+
+            if (VIEW_ENTRIES_URL === 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE_FOR_HIRING_FMS_2_0') {
+                console.warn("VIEW_ENTRIES_URL is a placeholder. Using local demo data for fetchEntries.");
+                 if (allEntries.length === 0) { // Only populate demo data if allEntries is empty
+                    const now = new Date();
+                    const baseTime = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+                    allEntries = [ // This will be sorted later
+                        {
+                            "Timestamp": formatDateForInput(addDays(baseTime, -2)), // Older
+                            "Department Requirement": "Technology",
+                            "No.Of Possitions": 2,
+                            "Requirement Role": "Software Engineer",
+                            "Comments": "Urgent hiring",
+                            "UID": "DEMO01",
+                            "Step Code": "DEMO_HR_1",
+                            "Take Action (Job Description & Job Posting)": "Prepare JD and post on LinkedIn, Naukri.",
+                            "Job Description & Job Posting Planned": formatDateForInput(baseTime),
+                            "Job Description & Job Posting Actual": null,
+                            "Job Description & Job Posting Time Delay": null,
+                        },
+                        {
+                            "Timestamp": formatDateForInput(addDays(baseTime, 0)), // Newer
+                            "Department Requirement": "Sales",
+                            "No.Of Possitions": 1,
+                            "Requirement Role": "Sales Executive",
+                            "Comments": "Immediate Joiner",
+                            "UID": "DEMO03",
+                            "Step Code": "DEMO_SL_1",
+                            "Take Action (Job Description & Job Posting)": "",
+                            "Job Description & Job Posting Planned": formatDateForInput(addDays(baseTime, 1)),
+                            "Job Description & Job Posting Actual": null,
+                            "Job Description & Job Posting Time Delay": null,
+                        },
+                        {
+                            "Timestamp": formatDateForInput(addDays(baseTime, -7)), // Oldest
+                            "Department Requirement": "Marketing",
+                            "No.Of Possitions": 1,
+                            "Requirement Role": "Digital Marketing Specialist",
+                            "Comments": "",
+                            "UID": "DEMO02",
+                            "Step Code": "DEMO_HR_3",
+                            "Take Action (Job Description & Job Posting)": "",
+                            "Job Description & Job Posting Planned": formatDateForInput(addDays(baseTime, -6)),
+                            "Job Description & Job Posting Actual": formatDateForInput(addDays(baseTime, -5)),
+                            "Job Description & Job Posting Time Delay": "1 day(s) late",
+                            "Take Action (Filtering the CVs )": "https://docs.google.com/forms/d/e/1FAIpQLSc_your_form_id_here_for_cv_filtering/viewform",
+                            "Filtering the CVs Planned": formatDateForInput(addDays(baseTime, -3)),
+                            "Filtering the CVs Actual": formatDateForInput(addDays(baseTime, -2)),
+                            "Filtering the CVs Candidate Name": "Alice Wonderland, Bob The Builder",
+                            "Filtering the CVs Time Delay": "1 day(s) late",
+                            "Take Action (1st Round of Interview)": "",
+                            "1st Round of Interview Planned": formatDateForInput(baseTime),
+                            "1st Round of Interview Actual": null,
+                            "1st Round of Interview Time Delay": null,
+                        }
+                    ];
+                }
+            } else { // Actual fetch
+                try {
+                    const res = await fetch(`${VIEW_ENTRIES_URL}?action=getEntries&cachebust=${new Date().getTime()}`);
+                    if (!res.ok) {
+                        const errorText = await res.text();
+                        throw new Error(`Failed to fetch: ${res.status} ${res.statusText} - ${errorText}`);
+                    }
+                    const result = await res.json();
+
+                    let dataToProcess = [];
+                    if (result && result.success && Array.isArray(result.data)) {
+                        dataToProcess = result.data;
+                    } else if (Array.isArray(result)) {
+                        console.warn("Apps Script returned a direct array. Expected {success: true, data: [...]}. Adapting...");
+                        dataToProcess = result;
+                    } else {
+                        tableStatus.textContent = 'Error fetching entries: '+(result.message ||'Invalid data format received.');
+                        showUserAlert('Error fetching entries: '+(result.message ||'Invalid data format received.'),'error');
+                        if(entranceOverlay) entranceOverlay.classList.add('hidden');
+                        return;
+                    }
+                    allEntries = dataToProcess; // Store fetched data
+                } catch (e) {
+                    console.error('Error fetching entries:', e);
+                    tableStatus.textContent = 'Failed to load entries. Check console, API URL, and script permissions.';
+                    showUserAlert('Network error while fetching entries: '+e.message,'error');
+                    if(entranceOverlay) entranceAnimationOverlay.classList.add('hidden');
+                    return; // Stop further processing on fetch error
+                }
+            }
+
+            // Common processing for both demo and fetched data:
+            allEntries.forEach(entry => entry.status = determineHiringStatus(entry));
+
+            // Default sort by Timestamp descending
+            allEntries.sort((a, b) => {
+                const dateA = parseFlexibleDate(a.Timestamp);
+                const dateB = parseFlexibleDate(b.Timestamp);
+                if (!dateA && !dateB) return 0;
+                if (!dateA) return 1; // Put entries with invalid dates at the end
+                if (!dateB) return -1;
+                return dateB - dateA; // Descending
+            });
+
+            currentlyDisplayedEntries = [...allEntries]; // Initialize with all entries, sorted
+            applyFiltersAndSearch(); // This will apply filters (if any) and render the first page
+            tableStatus.classList.toggle('hidden', allEntries.length > 0);
+            if (allEntries.length === 0 && !VIEW_ENTRIES_URL.includes('YOUR_GOOGLE_APPS_SCRIPT')) tableStatus.textContent = 'No entries found.';
+            else if (allEntries.length === 0) tableStatus.textContent = 'No entries (demo).';
+
+            if(entranceOverlay) entranceAnimationOverlay.classList.add('hidden');
+        }
+
+        function populateFilterDropdowns() {
+            statusFilter.innerHTML = '<option value="">All Statuses</option>';
+            Object.values(STATUS_MAP).forEach(statusVal => {
+                if (statusVal) {
+                    const option = document.createElement('option');
+                    option.value = statusVal;
+                    option.textContent = statusVal;
+                    statusFilter.appendChild(option);
+                }
+            });
+
+            const departments = [...new Set(allEntries.map(entry => entry['Department Requirement']?.trim()).filter(Boolean))].sort();
+            departmentFilter.innerHTML = '<option value="">All Departments</option>';
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentFilter.appendChild(option);
+            });
+
+            const roles = [...new Set(allEntries.map(entry => entry['Requirement Role']?.trim()).filter(Boolean))].sort();
+            roleFilter.innerHTML = '<option value="">All Roles</option>';
+            roles.forEach(role => {
+                const option = document.createElement('option');
+                option.value = role;
+                option.textContent = role;
+                roleFilter.appendChild(option);
+            });
+        }
+
+
+        function applyFiltersAndSearch() {
+            let filtered = [...allEntries]; // Start with all entries (which are already sorted by Timestamp desc)
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const selectedStatus = statusFilter.value;
+            const selectedDepartment = departmentFilter.value;
+            const selectedRole = roleFilter.value;
+            const startDateVal = dateStartFilter.value;
+            const endDateVal = dateEndFilter.value;
+            const selectedActionStatus = actionStatusFilter.value;
+
+            let startDate = null;
+            if (startDateVal) {
+                startDate = new Date(startDateVal);
+                startDate.setHours(0,0,0,0);
+            }
+            let endDate = null;
+            if (endDateVal) {
+                endDate = new Date(endDateVal);
+                endDate.setHours(23,59,59,999);
+            }
+
+            if (searchTerm || selectedStatus || selectedDepartment || selectedRole || startDate || endDate || selectedActionStatus) {
+                filtered = filtered.filter(entry => {
+                    const searchMatch = !searchTerm || (
+                        String(entry.UID).toLowerCase().includes(searchTerm) ||
+                        String(entry['Requirement Role']).toLowerCase().includes(searchTerm) ||
+                        String(entry['Department Requirement']).toLowerCase().includes(searchTerm) ||
+                        String(entry[HIRING_STAGES[1].candidateNameKey]).toLowerCase().includes(searchTerm) ||
+                        String(entry.Comments).toLowerCase().includes(searchTerm)
+                    );
+
+                    const statusMatch = !selectedStatus || (entry.status || determineHiringStatus(entry)) === selectedStatus;
+                    const departmentMatch = !selectedDepartment || entry['Department Requirement'] === selectedDepartment;
+                    const roleMatch = !selectedRole || entry['Requirement Role'] === selectedRole;
+
+                    let dateMatch = true;
+                    if (entry.Timestamp) {
+                        const entryDate = parseFlexibleDate(entry.Timestamp);
+                        if (entryDate && !isNaN(entryDate.getTime())) {
+                            if (startDate && entryDate < startDate) dateMatch = false;
+                            if (endDate && entryDate > endDate) dateMatch = false;
+                        } else {
+                            if(startDate || endDate) dateMatch = false;
+                        }
+                    } else if (startDate || endDate) {
+                         dateMatch = false;
+                    }
+
+
+                    let actionStatusMatch = true;
+                    if (selectedActionStatus) {
+                        const plannedActionInfo = getNextPlannedActionTimestamp(entry);
+                        if (plannedActionInfo.date) {
+                            const today = new Date(); today.setHours(0,0,0,0);
+                            const sevenDaysFromNow = new Date(today); sevenDaysFromNow.setDate(today.getDate() + 7);
+
+                            if (selectedActionStatus === 'overdue') {
+                                actionStatusMatch = plannedActionInfo.isOverdue;
+                            } else if (selectedActionStatus === 'upcoming') {
+                                actionStatusMatch = plannedActionInfo.date >= today && plannedActionInfo.date <= sevenDaysFromNow && !plannedActionInfo.isOverdue;
+                            }
+                        } else {
+                            actionStatusMatch = false;
+                        }
+                    }
+                    return searchMatch && statusMatch && departmentMatch && roleMatch && dateMatch && actionStatusMatch;
+                });
+            }
+            // The filtered list is already sorted by Timestamp desc because allEntries was.
+            // If specific column sorting was re-enabled, it would happen here.
+            currentlyDisplayedEntries = filtered;
+            currentPage = 1; // Reset to first page whenever filters change
+            renderTable(currentlyDisplayedEntries);
+        }
+
+
+        function renderTable(entriesToRender) {
+            entriesTableBody.innerHTML = '';
+            paginationControls.innerHTML = '';
+            renderScorecards(allEntries); // Scorecards always based on all (unfiltered) entries
+
+            tableStatus.classList.toggle('hidden', entriesToRender.length > 0);
+            if (entriesToRender.length === 0) {
+                if (allEntries.length > 0 && (searchInput.value || statusFilter.value || departmentFilter.value || roleFilter.value || dateStartFilter.value || dateEndFilter.value || actionStatusFilter.value)) {
+                    tableStatus.textContent = 'No entries match your filters.';
+                } else if (allEntries.length === 0 && !VIEW_ENTRIES_URL.includes('YOUR_GOOGLE_APPS_SCRIPT')) {
+                    tableStatus.textContent = 'No entries found from the source.';
+                } else if (allEntries.length === 0) {
+                     tableStatus.textContent = 'No entries available (or in demo mode).';
+                }
+            }
+
+            const paginatedEntries = entriesToRender.slice((currentPage-1)*ITEMS_PER_PAGE, (currentPage-1)*ITEMS_PER_PAGE + ITEMS_PER_PAGE);
+
+            paginatedEntries.forEach((entry, idx) => {
+                const row = entriesTableBody.insertRow();
+                row.className = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50 hover:bg-gray-100 transition-colors duration-150';
+
+                tableHeadersConfig.forEach(hConfig => {
+                    if (hConfig.key === 'actions') return;
+
+                    const cell = row.insertCell();
+                    let cellValue;
+                    let cellHtml = '';
+                    let isOverdue = false;
+
+                    if (hConfig.customRender) {
+                        const renderResult = hConfig.customRender(entry);
+                        cellValue = renderResult.text || 'N/A';
+                        isOverdue = renderResult.isOverdue || false;
+                    } else if (hConfig.key === 'status') {
+                        cellValue = entry.status || determineHiringStatus(entry);
+                    } else {
+                        cellValue = entry[hConfig.key];
+                        if (hConfig.key === 'No.Of Possitions' && entry.hasOwnProperty('No.Of Positions')) { // Check for potential typo
+                            cellValue = entry['No.Of Positions'];
+                        }
+                        cellValue = (hConfig.isDate && cellValue) ? formatDateForDisplay(cellValue) : (cellValue || 'N/A');
+                    }
+
+                    if (hConfig.key === 'status') {
+                        let statusClass = 'status-default';
+                        if (cellValue === STATUS_MAP.PENDING_JD) statusClass = 'status-pending-jd';
+                        else if (cellValue === STATUS_MAP.PENDING_CV_FILTERING) statusClass = 'status-pending-cv-filtering';
+                        else if (cellValue === STATUS_MAP.PENDING_FIRST_INTERVIEW) statusClass = 'status-pending-first-interview';
+                        else if (cellValue === STATUS_MAP.PENDING_FINAL_INTERVIEW) statusClass = 'status-pending-final-interview';
+                        else if (cellValue === STATUS_MAP.SELECTED) statusClass = 'status-selected';
+                        else if (cellValue === STATUS_MAP.REJECTED || cellValue === STATUS_MAP.ON_HOLD || cellValue === STATUS_MAP.OTHER_FINAL) statusClass = 'status-other-final';
+                        cellHtml = `<span class="status-badge ${statusClass}">${cellValue}</span>`;
+                    } else if (isOverdue) {
+                        cellHtml = `<span class="overdue-task">${cellValue}</span>`;
+                    } else {
+                        cellHtml = cellValue;
+                    }
+                    cell.innerHTML = cellHtml;
+                    cell.setAttribute('data-label',hConfig.label);
+                    cell.className='px-3 py-2 text-xs text-gray-700';
+                });
+
+                const actionsCell = row.insertCell();
+                actionsCell.setAttribute('data-label','Actions');
+                actionsCell.className='px-3 py-2 whitespace-nowrap text-xs text-gray-700 text-right md:text-left flex items-center justify-end md:justify-start space-x-1';
+
+                const viewButton = document.createElement('button');
+                viewButton.className = 'btn btn-info btn-xs p-1.5 btn-icon-only';
+                viewButton.title = 'View Details';
+                viewButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16"><path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0"/><path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8m8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7"/></svg>`;
+                viewButton.onclick = () => openEntryDetailsModal(entry.UID);
+                actionsCell.appendChild(viewButton);
+            });
+            renderPaginationControls(entriesToRender.length); // Pass the total number of items in the *currently filtered* list
+        }
+
+        function getNextPlannedActionTimestamp(entry) {
+            const currentStatus = entry.status || determineHiringStatus(entry);
+            let plannedTimestampStr = 'N/A';
+            let isOverdue = false;
+            const now = new Date(); now.setHours(0,0,0,0);
+            let relevantPlannedKey = '';
+            let dateObject = null;
+
+            for (const stage of HIRING_STAGES) {
+                if (!entry[stage.actualKey]) {
+                    relevantPlannedKey = stage.plannedKey;
+                    break;
+                }
+            }
+            if (!relevantPlannedKey || [STATUS_MAP.SELECTED, STATUS_MAP.REJECTED, STATUS_MAP.ON_HOLD, STATUS_MAP.OTHER_FINAL].includes(currentStatus)) {
+                return { text: 'N/A', isOverdue: false, date: null };
+            }
+
+
+            if (entry[relevantPlannedKey] && String(entry[relevantPlannedKey]).trim() !== "" && entry[relevantPlannedKey] !== "N/A" && entry[relevantPlannedKey] !== "SKIPPED") {
+                const plannedDate = parseFlexibleDate(entry[relevantPlannedKey]);
+                if (plannedDate && !isNaN(plannedDate.getTime())) {
+                    dateObject = plannedDate;
+                    plannedTimestampStr = formatDateForDisplay(plannedDate);
+                    if (plannedDate < now) {
+                        isOverdue = true;
+                    }
+                } else {
+                    plannedTimestampStr = String(entry[relevantPlannedKey]);
+                }
+            }
+            return { text: plannedTimestampStr, isOverdue: isOverdue, date: dateObject };
+        }
+
+
+        function renderPaginationControls(totalItemsInCurrentView) { // totalItemsInCurrentView is the length of currentlyDisplayedEntries
+            paginationControls.innerHTML='';
+            const totalPages = Math.ceil(totalItemsInCurrentView / ITEMS_PER_PAGE);
+            if(totalPages <= 1) return;
+
+            const createButton = (text, pageNum, isDisabled = false) => {
+                const btn = document.createElement('button');
+                btn.textContent = text;
+                btn.className = `btn btn-secondary text-sm px-2 py-1 sm:px-3 sm:py-1.5 ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-300'}`;
+                btn.disabled = isDisabled;
+                btn.onclick = () => {
+                    currentPage = pageNum;
+                    renderTable(currentlyDisplayedEntries); // Re-render the table with the new page from the existing filtered list
+                };
+                return btn;
+            };
+
+            paginationControls.appendChild(createButton('Previous', currentPage - 1, currentPage === 1));
+
+            const maxPagesToShow = 5;
+            let startPage, endPage;
+            if (totalPages <= maxPagesToShow) {
+                startPage = 1;
+                endPage = totalPages;
+            } else {
+                const maxPagesBeforeCurrent = Math.floor(maxPagesToShow / 2);
+                const maxPagesAfterCurrent = Math.ceil(maxPagesToShow / 2) - 1;
+                if (currentPage <= maxPagesBeforeCurrent) {
+                    startPage = 1;
+                    endPage = maxPagesToShow;
+                } else if (currentPage + maxPagesAfterCurrent >= totalPages) {
+                    startPage = totalPages - maxPagesToShow + 1;
+                    endPage = totalPages;
+                } else {
+                    startPage = currentPage - maxPagesBeforeCurrent;
+                    endPage = currentPage + maxPagesAfterCurrent;
+                }
+            }
+
+            if (startPage > 1) {
+                paginationControls.appendChild(createButton('1', 1));
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.className = 'px-2 py-1 text-sm text-gray-500';
+                    paginationControls.appendChild(dots);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = createButton(i, i, i === currentPage);
+                if (i === currentPage) {
+                    pageButton.classList.remove('btn-secondary', 'hover:bg-gray-300');
+                    pageButton.classList.add('btn-primary', 'cursor-default');
+                }
+                paginationControls.appendChild(pageButton);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                     const dots = document.createElement('span');
+                    dots.textContent = '...';
+                    dots.className = 'px-2 py-1 text-sm text-gray-500';
+                    paginationControls.appendChild(dots);
+                }
+                paginationControls.appendChild(createButton(totalPages, totalPages));
+            }
+
+            paginationControls.appendChild(createButton('Next', currentPage + 1, currentPage === totalPages));
+
+            const pageInfo = document.createElement('span');
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            pageInfo.className = 'px-2 sm:px-4 py-2 text-xs sm:text-sm text-gray-700 hidden sm:inline';
+            // Attempt to center page info, might need adjustment based on final button count
+            if (paginationControls.children.length > 2) {
+                 paginationControls.insertBefore(pageInfo, paginationControls.children[Math.floor(paginationControls.children.length/2)]);
+            } else {
+                paginationControls.appendChild(pageInfo);
+            }
+        }
+
+
+        function updateDateTime() {
+            const dateTimeDisplay = document.getElementById('dateTimeDisplay');
+            if (dateTimeDisplay) {
+                const now = new Date();
+                const options = {
+                    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                };
+                dateTimeDisplay.textContent = now.toLocaleString('en-US', options);
+            }
+        }
+
+    </script>
+</body>
+</html>
